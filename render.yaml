@@ -1,3 +1,4 @@
+version: 1
 services:
   # Backend Web Service
   - type: web
@@ -25,11 +26,11 @@ services:
       - key: FRONTEND_URL
         fromService:
           name: mcms-frontend
-          type: web
+          type: static_site
           property: url
 
   # Frontend Static Site
-  - type: web
+  - type: static_site
     name: mcms-frontend
     env: static
     plan: free
@@ -42,10 +43,6 @@ services:
           name: mcms-backend
           type: web
           property: url
-        # Append /api to the backend URL
-        # Note: Render doesn't support string concatenation in envVars directly like this
-        # So we might need a small script or just manually set it in the dashboard.
-        # But for Blueprint, we can try to use a build script trick or just set it.
     routes:
       - type: rewrite
         source: /*
