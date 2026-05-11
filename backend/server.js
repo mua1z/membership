@@ -78,6 +78,43 @@ Member.hasMany(Contribution,   { foreignKey: 'memberDbId', as: 'contributions', 
 // Connect to DB (async - server starts regardless, DB connects in background)
 connectDB();
 
+// ── Auto-Seed Admin Users (Free tier: no shell/SSH) ─────────────────────────
+// Only runs on production first deploy when DB_SYNC=true.
+// Remove this block after first successful login.
+const seedInitialUsers = async () => {
+  try {
+    const { sequelize } = require('./config/db');
+    const User = require('./models/User');
+    const bcrypt = require('bcryptjs');
+
+    const [admin, operator] = await Promise.all([
+      User.findOne({ where: { email: 'admin@mcms.ddu' } }),
+      User.findOne({ where: { email: 'operator@mcms.ddu' } })
+    ]);
+
+    if (!admin) {
+      await User.create({
+        username: 'admin', email: 'admin@mcms.ddu',
+        password: 'admin123', fullName: 'System Administrator', role: 'admin'
+      });
+      console.log('✅ Auto-created admin: admin@mcms.ddu / admin123');
+    }
+    if (!operator) {
+      await User.create({
+        username: 'operator', email: 'operator@mcms.ddu',
+        password: 'operator123', fullName: 'System Operator', role: 'operator'
+      });
+      console.log('✅ Auto-created operator: operator@mcms.ddu / operator123');
+    }
+  } catch (err) {
+    console.error('⚠️ Auto-seed skipped (DB not ready):', err.message);
+  }
+};
+
+if (isProduction && process.env.DB_SYNC === 'true') {
+  setTimeout(seedInitialUsers, 3000);
+}
+
 // ── API Routes ────────────────────────────────────────────────────────────────
 // IMPORTANT: All API routes MUST be defined BEFORE the SPA fallback below
 app.use('/api/auth',          require('./routes/authRoutes'));
