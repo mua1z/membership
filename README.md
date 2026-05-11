@@ -1,4 +1,3 @@
-<<<<<<< HEAD
 # MCMS-DDU - Membership Contribution Management System
 ## Dire Dawa City Administration
 
@@ -36,7 +35,7 @@ An enterprise-grade web application for managing membership contributions, repla
 
 ### Backend
 - **Node.js + Express** - REST API server
-- **MongoDB + Mongoose** - NoSQL database
+- **MySQL + Sequelize** - Relational database & ORM
 - **JWT Authentication** - Secure token-based auth
 - **Multer + XLSX** - Excel file processing
 
@@ -52,7 +51,7 @@ An enterprise-grade web application for managing membership contributions, repla
 ## 📋 Prerequisites
 
 - **Node.js** v18+ 
-- **MongoDB** v6+ (local or Atlas)
+- **MySQL** 8.0+ or **MariaDB**
 - **npm** or **yarn**
 
 ---
@@ -77,22 +76,24 @@ Create `backend/.env` (already provided):
 
 ```env
 PORT=5000
-MONGODB_URI=mongodb://localhost:27017/mcms-ddu
-JWT_SECRET=mcms_ddu_secret_key_2026_dire_dawa_administration
-JWT_EXPIRE=30d
 NODE_ENV=development
+JWT_SECRET=your_jwt_secret_here
+JWT_EXPIRE=30d
+
+# Database Configuration (MySQL)
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=
+DB_NAME=membership_fee_db
+DB_PORT=3306
+
 FRONTEND_URL=http://localhost:5173
 ```
 
-### 3. Start MongoDB
+### 3. Setup Database
 
-```bash
-# Windows (if MongoDB is installed locally)
-mongod
-
-# Or use MongoDB Atlas (cloud)
-# Update MONGODB_URI in .env
-```
+1. Create a MySQL database named `membership_fee_db`.
+2. The tables will be automatically created by Sequelize when you start the backend.
 
 ### 4. Run the Application
 
@@ -254,17 +255,6 @@ Then login with:
 Name, Gender, Phone, Email, Branch, Salary, Currency, EmploymentType, Occupation, BusinessType, Capital, Income
 ```
 
-### Supported File Types
-- `.xlsx`
-- `.xls`
-- `.csv`
-
-### Import Validation
-- ❌ Missing name → Reject row
-- ❌ Missing phone → Reject row
-- ⚠️ Invalid salary → Warning, use 0
-- ⚠️ Duplicate phone → Skip row
-
 ---
 
 ## 🏗 Project Structure
@@ -273,62 +263,23 @@ Name, Gender, Phone, Email, Branch, Salary, Currency, EmploymentType, Occupation
 MCMS-DDU/
 ├── backend/
 │   ├── config/
-│   │   └── db.js                 # MongoDB connection
-│   ├── controllers/
-│   │   ├── authController.js     # Authentication logic
-│   │   ├── memberController.js   # Member CRUD
-│   │   ├── paymentController.js  # Payment handling
-│   │   ├── receiptController.js  # Receipt management
-│   │   ├── reportController.js   # Reports
-│   │   ├── dashboardController.js # Dashboard stats
-│   │   └── importController.js   # Excel import
-│   ├── middleware/
-│   │   └── auth.js               # JWT middleware
-│   ├── models/
-│   │   ├── User.js               # User schema
-│   │   ├── Member.js             # Member schema
-│   │   ├── Contribution.js       # Contribution schema
-│   │   ├── Payment.js            # Payment schema
-│   │   └── Receipt.js            # Receipt schema
-│   ├── routes/
-│   │   ├── authRoutes.js
-│   │   ├── memberRoutes.js
-│   │   ├── paymentRoutes.js
-│   │   ├── receiptRoutes.js
-│   │   ├── reportRoutes.js
-│   │   ├── dashboardRoutes.js
-│   │   ├── contributionRoutes.js
-│   │   └── importRoutes.js
-│   ├── utils/
-│   │   └── classificationEngine.js  # Auto-classification
-│   ├── uploads/                  # Uploaded Excel files
+│   │   └── db.js                 # MySQL connection (Sequelize)
+│   ├── controllers/              # API Route controllers
+│   ├── models/                   # Sequelize models (MySQL tables)
+│   ├── routes/                   # Express routes
+│   ├── utils/                    # Business logic (Classification, etc)
+│   ├── uploads/                  # Uploaded profile photos & docs
 │   ├── .env                      # Environment variables
-│   ├── server.js                 # Entry point
-│   └── package.json
+│   └── server.js                 # Entry point
 │
 └── frontend/
     ├── src/
-    │   ├── components/
-    │   │   ├── Layout.tsx        # Main layout with sidebar
-    │   │   ├── MemberModal.tsx   # Add/Edit member modal
-    │   │   ├── PaymentModal.tsx  # Record payment modal
-    │   │   └── ImportModal.tsx   # Excel import modal
-    │   ├── context/
-    │   │   └── AuthContext.tsx   # Auth state management
-    │   ├── lib/
-    │   │   └── api.ts            # Axios instance
-    │   ├── pages/
-    │   │   ├── Login.tsx         # Login page
-    │   │   ├── Dashboard.tsx     # Dashboard with charts
-    │   │   ├── Members.tsx       # Members table
-    │   │   ├── Payments.tsx      # Payments tracking
-    │   │   └── Reports.tsx       # Financial reports
-    │   ├── App.tsx               # Main app component
-    │   ├── main.tsx              # Entry point
-    │   └── index.css             # Tailwind styles
-    ├── index.html
-    ├── vite.config.ts
-    ├── tailwind.config.js
+    │   ├── components/           # Reusable UI components
+    │   ├── context/              # State management (Auth, etc)
+    │   ├── lib/                  # Axios instance & API config
+    │   ├── pages/                # Page components
+    │   ├── App.tsx               # Main routing
+    │   └── main.tsx              # Entry point
     └── package.json
 ```
 
@@ -345,78 +296,21 @@ MCMS-DDU/
 
 ---
 
-## 🧪 Testing Checklist
-
-- ✅ Accurate contribution calculation
-- ✅ Correct member classification
-- ✅ No payment without receipt generation
-- ✅ Defaulter detection works
-- ✅ Excel import with validation
-- ✅ Excel export with all data
-- ✅ Role-based access control
-- ✅ Pagination and search
-- ✅ Dark mode functionality
-
----
-
-## 📈 Implementation Phases
-
-### Phase 1 (Completed)
-- ✅ Member registration
-- ✅ Auto-classification engine
-- ✅ Contribution calculation
-- ✅ Excel-like member table
-
-### Phase 2 (Completed)
-- ✅ Payment recording
-- ✅ Receipt generation
-- ✅ Financial reports
-- ✅ Dashboard analytics
-
-### Phase 3 (Future Enhancements)
-- 🔄 Women & Youth Wing management
-- 🔄 SMS notifications for defaulters
-- 🔄 Multi-language support (Amharic, English)
-- 🔄 Automated backup system
-- 🔄 Advanced audit trail
-
----
-
 ## 🐛 Troubleshooting
 
-### MongoDB Connection Error
-```bash
-# Check if MongoDB is running
-mongod --version
-
-# Start MongoDB service
-# Windows:
-net start MongoDB
-
-# Or use MongoDB Atlas (cloud)
-```
+### MySQL Connection Error
+- Ensure MySQL service is running (check XAMPP or Windows Services).
+- Verify `DB_USER` and `DB_PASSWORD` in `backend/.env`.
+- Ensure the database `membership_fee_db` exists.
 
 ### Port Already in Use
 ```bash
 # Change PORT in backend/.env
 PORT=5001
-
-# Change port in frontend/vite.config.ts
-server: { port: 5174 }
 ```
 
 ### CORS Error
-- Ensure `FRONTEND_URL` in `backend/.env` matches your frontend URL
-- Check that frontend proxy is configured correctly
-
----
-
-## 📞 Support
-
-For issues or questions:
-- Check the API documentation above
-- Review the troubleshooting section
-- Check MongoDB and server logs
+- Ensure `FRONTEND_URL` in `backend/.env` matches your frontend URL.
 
 ---
 
@@ -426,17 +320,4 @@ This project is developed for **Dire Dawa City Administration** internal use.
 
 ---
 
-## 🎁 Bonus Features (Planned)
-
-- 📱 **SMS Integration** - Twilio or local SMS provider for payment reminders
-- 🌍 **Multi-Language** - Amharic/English toggle
-- 💾 **Backup System** - Automated MongoDB backups
-- 📊 **Advanced Analytics** - Revenue prediction, branch ranking
-- 📧 **Email Notifications** - Automated receipt delivery
-
----
-
 **Developed with ❤️ for Dire Dawa City Administration Finance Bureau**
-=======
-# Membership_fee_management_system
->>>>>>> 4ae2b04ecad3c66351fb30d1330f3988f80798bc
