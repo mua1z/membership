@@ -73,7 +73,9 @@ export default function FastEntryModal({ onClose, onSuccess, sectorTypes, catego
   
   useEffect(() => {
     if (selectedSectorId) {
-      api.get(`/sectors/${selectedSectorId}/categories`).then(res => setAvailableCategories(res.data)).catch(() => {});
+      api.get(`/sectors/${selectedSectorId}/categories`).then(res => {
+        setAvailableCategories(res.data.filter(c => !c.name.toLowerCase().includes('student')));
+      }).catch(() => {});
     } else {
       setAvailableCategories([]);
     }
