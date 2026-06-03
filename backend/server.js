@@ -102,10 +102,11 @@ const seedInitialUsers = async () => {
     const User = require('./models/User');
 
     const usersToCreate = [
-      { username: 'admin',     email: 'admin@mcms.ddu',       password: 'admin123',    fullName: 'System Administrator',     role: 'admin' },
-      { username: 'operator',  email: 'operator@mcms.ddu',    password: 'operator123', fullName: 'System Operator',          role: 'sector_officer' },
-      { username: 'admin-pp',  email: 'admin@pp-diredawa.org', password: 'admin123',  fullName: 'PP Dire Dawa Administrator', role: 'admin' },
-      { username: 'superadmin', email: 'superadmin@pp-diredawa.org', password: 'superadmin123', fullName: 'Super Administrator', role: 'super_admin' }
+      { username: 'admin',     email: 'admin@mcms.ddu',            password: 'admin123',       fullName: 'System Administrator',          role: 'admin' },
+      { username: 'operator',  email: 'operator@mcms.ddu',         password: 'operator123',    fullName: 'System Operator',               role: 'sector_officer' },
+      { username: 'admin-pp',  email: 'admin@pp-diredawa.org',     password: 'admin123',       fullName: 'PP Dire Dawa Administrator',    role: 'admin' },
+      { username: 'superadmin',email: 'superadmin@pp-diredawa.org',password: 'superadmin123', fullName: 'Super Administrator',            role: 'super_admin' },
+      { username: 'seyfedin',  email: 'seyfedin@pp-diredawa.org', password: 'seyfedin@2026', fullName: 'Seyfedin',                      role: 'admin' }
     ];
 
     for (const u of usersToCreate) {
@@ -247,7 +248,8 @@ const start = async () => {
     console.error('⚠️ Audit logs migration error:', e.message);
   }
 
-  if (isProduction && process.env.DB_SYNC === 'true') {
+  // Always seed essential users in production (safe — skips existing users)
+  if (isProduction) {
     setTimeout(seedInitialUsers, 3000);
   }
 
