@@ -68,14 +68,6 @@ export default function Navbar({ scrolled, navLinks }: NavbarProps) {
               <LogIn className="w-3.5 h-3.5 inline mr-1.5" />
               {t('nav.login')}
             </button>
-            <button onClick={() => navigate('/login')}
-              className={`px-5 py-2.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all duration-300 shadow-lg ${
-                scrolled
-                  ? 'bg-[#0B5D3B] text-white hover:bg-[#094a2f] shadow-[#0B5D3B]/20'
-                  : 'bg-[#D4AF37] text-gray-900 hover:bg-[#c39e2e] shadow-[#D4AF37]/30'
-              }`}>
-              {t('nav.register')}
-            </button>
             <button onClick={() => setMobileMenuOpen(true)}
               className={`lg:hidden p-2 rounded-lg transition-colors ${
                 scrolled ? 'text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-slate-900' : 'text-white hover:bg-white/10'
@@ -122,10 +114,6 @@ export default function Navbar({ scrolled, navLinks }: NavbarProps) {
               <button onClick={() => navigate('/login')}
                 className="px-6 py-3 border border-white/30 text-white font-bold uppercase tracking-wider rounded-lg text-xs hover:bg-white hover:text-gray-900 transition-all">
                 {t('nav.login')}
-              </button>
-              <button onClick={() => navigate('/login')}
-                className="px-6 py-3 bg-[#D4AF37] text-gray-900 font-bold uppercase tracking-wider rounded-lg text-xs hover:bg-[#c39e2e] transition-all">
-                {t('nav.register')}
               </button>
             </motion.div>
           </motion.div>

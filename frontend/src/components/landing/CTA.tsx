@@ -45,11 +45,6 @@ export default function CTA({ content, ctaBg }: CTAProps) {
 
           <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
             <button onClick={() => navigate('/login')}
-              className="inline-flex items-center justify-center gap-3 px-8 py-4 bg-[#D4AF37] text-slate-950 font-black rounded-xl hover:bg-[#c39e2e] transition-all duration-300 shadow-2xl shadow-[#D4AF37]/20 text-xs uppercase tracking-wider">
-              {t('hero.cta_register')}
-            </button>
-            
-            <button onClick={() => navigate('/login')}
               className="inline-flex items-center justify-center gap-3 px-8 py-4 border border-white/20 text-white font-bold rounded-xl hover:border-white/50 hover:bg-white/10 transition-all duration-300 text-xs uppercase tracking-wider">
               {t('hero.cta_login')}
             </button>

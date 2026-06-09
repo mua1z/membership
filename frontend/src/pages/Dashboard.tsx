@@ -306,7 +306,7 @@ export default function Dashboard() {
                   </div>
                   <div>
                     <p className="text-[18px] font-black text-emerald-600">ETB {Number(aiInsights.todayRevenue).toLocaleString()}</p>
-                    <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Today's Revenue</p>
+                    <p className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">{t('ai.todays_revenue')}</p>
                   </div>
                   <div>
                     <p className="text-[18px] font-black text-rose-600">{aiInsights.unpaidThisMonth}</p>

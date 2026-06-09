@@ -29,10 +29,8 @@ i18n
     interpolation: {
       escapeValue: false
     },
-    parseMissingKeyHandler: (key) => {
-      const parts = key.split('.');
-      return parts[parts.length - 1];
-    }
+    returnNull: false,
+    returnEmptyString: false
   });
 
 export { SUPPORTED_LANGS };

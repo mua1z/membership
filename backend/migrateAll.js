@@ -139,26 +139,26 @@ async function migrate() {
     // Determine category based on membershipType
     if (member.membershipType === 'Salary-Based') {
       targetCategoryId = employeeCategory.id;
-      targetType = 'Government Institutions';
+      targetType = 'Institution';
     } else if (member.membershipType === 'Non-Salary') {
       const farmerCat = await MemberCategory.findOne({ where: { name: 'Farmer Members' } });
       const urbanResCat = await MemberCategory.findOne({ where: { name: 'Urban Residents' } });
       targetCategoryId = farmerCat ? farmerCat.id : null;
-      targetType = 'Rural Clusters';
+      targetType = 'Rural Cluster';
     } else if (member.membershipType === 'Business') {
       const entCat = await MemberCategory.findOne({ where: { name: 'Enterprises' } });
       targetCategoryId = entCat ? entCat.id : null;
-      targetType = 'Urban Woredas';
+      targetType = 'Urban Woreda';
     } else if (member.membershipType === 'Student') {
       const studentCat = await MemberCategory.findOne({ where: { name: 'Student Members' } });
       targetCategoryId = studentCat ? studentCat.id : null;
-      targetType = 'Urban Woredas';
+      targetType = 'Urban Woreda';
     } else if (member.membershipType === 'Investor') {
       const investorCat = await MemberCategory.findOne({ where: { name: 'Investors' } });
       targetCategoryId = investorCat ? investorCat.id : null;
-      targetType = 'Urban Woredas';
+      targetType = 'Urban Woreda';
     } else if (member.membershipType === 'Wing') {
-      targetType = 'Government Institutions';
+      targetType = 'Institution';
     }
 
     // Fallback if no category determined

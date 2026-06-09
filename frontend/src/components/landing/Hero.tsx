@@ -72,10 +72,6 @@ export default function Hero({ stats, content, heroBg }: HeroProps) {
                 className="inline-flex items-center justify-center gap-3 px-6 py-3.5 bg-[#D4AF37] text-slate-950 font-black rounded-xl hover:bg-[#c39e2e] transition-all duration-300 shadow-2xl shadow-[#D4AF37]/20 text-xs uppercase tracking-wider">
                 {t('hero.cta_login')}
               </button>
-              <button onClick={() => navigate('/login')}
-                className="inline-flex items-center justify-center gap-3 px-6 py-3.5 bg-[#0B5D3B] text-white font-black rounded-xl hover:bg-[#094a2f] border border-[#0B5D3B] transition-all duration-300 shadow-2xl shadow-[#0B5D3B]/20 text-xs uppercase tracking-wider">
-                {t('hero.cta_register')}
-              </button>
               <a href="#about"
                 className="inline-flex items-center justify-center gap-3 px-6 py-3.5 border border-white/20 text-white font-bold rounded-xl hover:border-white/50 hover:bg-white/10 transition-all duration-300 text-xs uppercase tracking-wider">
                 {t('hero.cta_learn')}

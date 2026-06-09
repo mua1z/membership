@@ -86,14 +86,14 @@ interface Pagination {
 
 // Dynamic label maps (for internal logic, labels will be translated via t())
 const SECTOR_UNIT_LABELS: Record<string, string> = {
-  'Institution': 'common.government_office',
+  'Institution': 'common.institution',
   'Rural Cluster': 'common.rural_sector',
   'Urban Woreda': 'common.urban_woreda',
   'Secondary School': 'common.secondary_school',
   'Health Institution': 'common.health_institution'
 }
 const SECTOR_TYPE_DISPLAY: Record<string, string> = {
-  'Institution': 'common.government_institutions',
+  'Institution': 'common.institution',
   'Rural Cluster': 'common.rural',
   'Urban Woreda': 'common.urban',
   'Secondary School': 'common.secondary_school',
