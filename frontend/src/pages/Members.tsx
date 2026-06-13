@@ -86,14 +86,14 @@ interface Pagination {
 
 // Dynamic label maps (for internal logic, labels will be translated via t())
 const SECTOR_UNIT_LABELS: Record<string, string> = {
-  'Institution': 'common.government_office',
+  'Institution': 'common.institution',
   'Rural Cluster': 'common.rural_sector',
   'Urban Woreda': 'common.urban_woreda',
   'Secondary School': 'common.secondary_school',
   'Health Institution': 'common.health_institution'
 }
 const SECTOR_TYPE_DISPLAY: Record<string, string> = {
-  'Institution': 'common.government_institutions',
+  'Institution': 'common.institution',
   'Rural Cluster': 'common.rural',
   'Urban Woreda': 'common.urban',
   'Secondary School': 'common.secondary_school',
@@ -970,10 +970,10 @@ export default function Members() {
       <ConfirmDialog
         open={confirmDelete.open}
         variant="danger"
-        title="Delete Member"
-        message="This will permanently remove this member and all associated records. This action cannot be undone."
-        confirmLabel="Delete Member"
-        cancelLabel="Cancel"
+        title={t('common_ui.delete_member_title')}
+        message={t('common_ui.delete_member_message')}
+        confirmLabel={t('common.delete')}
+        cancelLabel={t('common.cancel')}
         onConfirm={doDelete}
         onCancel={() => setConfirmDelete({ open: false, id: null })}
       />
@@ -981,19 +981,19 @@ export default function Members() {
       <ConfirmDialog
         open={confirmBulkDelete}
         variant="danger"
-        title={`Delete ${selectedIds.length} Selected Members`}
-        message={`This will permanently delete ${selectedIds.length} selected members and all their associated records. This action cannot be undone.`}
-        confirmLabel="Delete Selected"
-        cancelLabel="Cancel"
+        title={t('common_ui.delete_selected_members_title', { count: selectedIds.length })}
+        message={t('common_ui.delete_selected_members_message', { count: selectedIds.length })}
+        confirmLabel={t('common.delete_selected')}
+        cancelLabel={t('common.cancel')}
         onConfirm={doBulkDelete}
         onCancel={() => setConfirmBulkDelete(false)}
       />
 
       <DeleteAllConfirmDialog
         open={confirmClearAll}
-        title="Delete All Members"
-        message="This will permanently delete ALL members and their associated records. This action cannot be undone."
-        confirmText="DELETE ALL MEMBERS"
+        title={t('common_ui.delete_all_members_title')}
+        message={t('common_ui.delete_all_members_message')}
+        confirmText={t('common_ui.delete_all_members_confirm')}
         onConfirm={doClearAll}
         onCancel={() => setConfirmClearAll(false)}
       />

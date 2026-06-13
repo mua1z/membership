@@ -291,7 +291,7 @@ export default function SectorPaymentModal({ onClose, onSuccess, editPayment, mo
                   >
                     <option value="">Select sector type</option>
                     {sectorTypes.map((t_obj: any) => (
-                      <option key={t_obj.id} value={t_obj.name}>{t_obj.name}</option>
+                      <option key={t_obj.id} value={t_obj.name}>{t_obj.name === 'Institution' ? t('common.institution') : t_obj.name === 'Rural Cluster' ? t('common.rural') : t_obj.name === 'Urban Woreda' ? t('common.urban') : t_obj.name === 'Secondary School' ? t('common.secondary_school') : t_obj.name === 'Health Institution' ? t('common.health_institution') : t_obj.name}</option>
                     ))}
                   </select>
                 </div>

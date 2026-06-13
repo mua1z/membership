@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext'
 import { useTranslation } from 'react-i18next'
 import {
   LayoutDashboard, Users, Wallet, FileText, LogOut, Menu, Sun, Moon,
-  Settings, UserCircle, ShieldCheck, ChevronRight, Languages, Bot
+  Settings, UserCircle, ShieldCheck, ChevronRight, Languages, Bot, Image
 } from 'lucide-react'
 import PageLoader from './PageLoader'
 
@@ -28,12 +28,13 @@ export default function Layout() {
     }, 1000)
   }
 
-  const langOrder = ['am', 'en', 'or']
+  const langOrder = ['am', 'en', 'om', 'so']
   const currentLang = i18n.language || 'am'
-  const langLabels: Record<string, string> = { en: 'English', am: 'አማርኛ', or: 'Afaan Oromoo' }
+  const langLabels: Record<string, string> = { en: 'English', am: 'አማርኛ', om: 'Afaan Oromoo', so: 'Soomaali' }
 
   const toggleLanguage = () => {
-    const idx = langOrder.indexOf(currentLang.startsWith('am') ? 'am' : currentLang.startsWith('or') ? 'or' : 'en')
+    const code = currentLang.startsWith('am') ? 'am' : currentLang.startsWith('om') ? 'om' : currentLang.startsWith('so') ? 'so' : 'en'
+    const idx = langOrder.indexOf(code)
     const next = langOrder[(idx + 1) % langOrder.length]
     i18n.changeLanguage(next)
   }
@@ -46,6 +47,7 @@ export default function Layout() {
     { icon: Bot,             label: 'AI Assistant',        path: '/ai-assistant', roles: ['admin', 'sector_officer', 'expert'] },
     { icon: ShieldCheck,     label: t('common.users'),     path: '/users',     roles: ['admin'] },
     { icon: Settings,        label: t('common.settings'),  path: '/settings',  roles: ['admin'] },
+    { icon: Image,           label: 'Landing Page',       path: '/settings/landing-page', roles: ['admin'] },
   ].filter(item => item.roles.includes(user?.role || ''))
 
   const baseUrl = (import.meta.env.VITE_API_URL || 'http://localhost:5000/api').replace(/\/api$/, '')
@@ -56,7 +58,7 @@ export default function Layout() {
   const isActive = (path: string) => location.pathname === path || location.pathname.startsWith(path + '/')
 
   return (
-    <div className={`min-h-screen bg-slate-50 dark:bg-slate-950 flex font-sans ${currentLang.startsWith('am') ? 'font-amharic' : currentLang.startsWith('or') ? '' : ''}`}>
+    <div className={`min-h-screen bg-slate-50 dark:bg-slate-950 flex font-sans ${currentLang.startsWith('am') ? 'font-amharic' : currentLang.startsWith('om') ? '' : ''}`}>
       {loggingOut && (
         <div className="fixed inset-0 z-[100] bg-white/80 dark:bg-slate-950/80 backdrop-blur-sm flex items-center justify-center">
           <PageLoader message={t('common.processing')} />
@@ -159,7 +161,7 @@ export default function Layout() {
               className="px-3 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 text-[10px] font-black text-amber-700 dark:text-amber-400 flex items-center gap-2 shadow-sm transition-all hover:scale-105 active:scale-95"
             >
               <Languages className="w-4 h-4" />
-              {langLabels[currentLang.startsWith('am') ? 'am' : currentLang.startsWith('or') ? 'or' : 'en']}
+              {langLabels[currentLang.startsWith('am') ? 'am' : currentLang.startsWith('om') ? 'om' : currentLang.startsWith('so') ? 'so' : 'en']}
             </button>
             <button
               onClick={toggleDarkMode}

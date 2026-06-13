@@ -8,7 +8,7 @@ const fs       = require('fs');
 const path     = require('path');
 
 // Load env vars first
-dotenv.config();
+if (process.env.NODE_ENV !== 'production') { dotenv.config(); }
 
 const isProduction = process.env.NODE_ENV === 'production';
 const DEBUG_DB = process.env.DEBUG_DB === 'true';
@@ -151,6 +151,7 @@ app.use('/api',               require('./routes/sectorRoutes'));
 app.use('/api/ai',            require('./routes/aiRoutes'));
 app.use('/api/analytics',     require('./routes/analyticsRoutes'));
 app.use('/api/sector-payments', require('./routes/sectorPaymentRoutes'));
+app.use('/api/landing',        require('./routes/landingPageRoutes'));
 
 // Health Check (must be before SPA fallback)
 app.get('/api/health', (req, res) => {
@@ -228,6 +229,12 @@ const start = async () => {
   await connectDB();
 
   try {
+    await require('./migrations/create_chat_tables')();
+  } catch (e) {
+    console.error('⚠️ Chat tables migration error:', e.message);
+  }
+
+  try {
     require('./migrations/create_ai_logs')();
   } catch (e) {
     console.error('⚠️ AI logs migration error:', e.message);
@@ -247,13 +254,31 @@ const start = async () => {
   } catch (e) {
     console.error('⚠️ Audit logs migration error:', e.message);
   }
+  try {
+    require('./migrations/create_export_logs')();
+  } catch (e) {
+    console.error('⚠️ Export logs migration error:', e.message);
+  }
+
+  try {
+    await require('./migrations/create_landing_page_tables')();
+  } catch (e) {
+    console.error('⚠️ Landing page migration error:', e.message);
+  }
+
+  // ── Expand User.role enum to include super_admin ───────────────────────
+  try {
+    require('./migrations/alter_user_role_enum')();
+  } catch (e) {
+    console.error('⚠️ User role enum migration error:', e.message);
+  }
 
   // Always seed essential users in production (safe — skips existing users)
   if (isProduction) {
     setTimeout(seedInitialUsers, 3000);
   }
 
-  app.listen(PORT, '0.0.0.0', () => {
+  app.listen(PORT, () => {
     console.log(`Server started successfully on port ${PORT}`);
   });
 
