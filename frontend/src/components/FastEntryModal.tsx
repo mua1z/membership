@@ -428,18 +428,20 @@ export default function FastEntryModal({ onClose, onSuccess, sectorTypes, catego
                 </select>
               </div>
             )}
-            <div>
-              <label className="block text-xs font-bold text-gray-500 mb-1">{t('common.sector_unit')} *</label>
-              <select
-                value={selectedSectorId}
-                onChange={(e) => { setSelectedSectorId(e.target.value); setSelectedCategoryId(''); }}
-                className="input bg-white dark:bg-gray-900 w-full"
-                disabled={userRole !== 'sector_officer' && !selectedSectorType}
-              >
-                <option value="">{t('common.search')}...</option>
-                  {sectors.map(s => <option key={s.id} value={s.id}>{t(`common.${s.name}`, { defaultValue: s.name })}</option>)}
-              </select>
-            </div>
+            {userRole !== 'sector_officer' && (
+              <div>
+                <label className="block text-xs font-bold text-gray-500 mb-1">{t('common.sector_unit')} *</label>
+                <select
+                  value={selectedSectorId}
+                  onChange={(e) => { setSelectedSectorId(e.target.value); setSelectedCategoryId(''); }}
+                  className="input bg-white dark:bg-gray-900 w-full"
+                  disabled={!selectedSectorType}
+                >
+                  <option value="">{t('common.search')}...</option>
+                    {sectors.map(s => <option key={s.id} value={s.id}>{t(`common.${s.name}`, { defaultValue: s.name })}</option>)}
+                </select>
+              </div>
+            )}
             <div>
               <label className="block text-xs font-bold text-gray-500 mb-1">{t('common.category')} *</label>
               <select
