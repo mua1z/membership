@@ -44,7 +44,6 @@ const Receipt = sequelize.define('Receipt', {
   tableName: 'receipts',
   timestamps: true,
   indexes: [
-    { fields: ['receiptId'] },
     { fields: ['memberId'] },
     { fields: ['issuedAt'] }
   ]

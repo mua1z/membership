@@ -405,6 +405,67 @@ exports.approvePayment = async (req, res) => {
       notes: 'Deposit approved'
     });
 
+    // Automatically update associated pending member payments to Paid
+    try {
+      const Payment = require('../models/Payment');
+      const Receipt = require('../models/Receipt');
+      const Member = require('../models/Member');
+
+      const sectorMembers = await Member.findAll({
+        where: { sectorUnitId: payment.sectorUnitId },
+        attributes: ['id', 'memberId', 'fullName', 'branch']
+      });
+
+      if (sectorMembers.length > 0) {
+        const memberDbIds = sectorMembers.map(m => m.id);
+
+        const pendingPayments = await Payment.findAll({
+          where: {
+            memberDbId: { [Op.in]: memberDbIds },
+            periodMonth: payment.billingMonth,
+            periodYear: payment.billingYear,
+            status: 'Pending'
+          }
+        });
+
+        if (pendingPayments.length > 0) {
+          // Update status to Paid
+          await Payment.update(
+            { status: 'Paid' },
+            {
+              where: {
+                id: { [Op.in]: pendingPayments.map(p => p.id) }
+              }
+            }
+          );
+
+          // Generate receipts for them
+          const memberMap = new Map(sectorMembers.map(m => [m.id, m]));
+          const receiptsToCreate = pendingPayments.map(p => {
+            const member = memberMap.get(p.memberDbId);
+            return {
+              receiptId: p.receiptId || `RCP-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`,
+              paymentDbId: p.id,
+              memberDbId: member.id,
+              memberId: member.memberId,
+              memberName: member.fullName,
+              amount: p.amount,
+              currency: p.currency,
+              periodMonth: p.periodMonth,
+              periodYear: p.periodYear,
+              paymentMethod: p.method,
+              issuedBy: req.user?.username || 'Admin',
+              branch: member.branch
+            };
+          });
+
+          await Receipt.bulkCreate(receiptsToCreate, { ignoreDuplicates: true });
+        }
+      }
+    } catch (paymentUpdateErr) {
+      console.error('Failed to update member payments on SectorPayment approval:', paymentUpdateErr);
+    }
+
     // Auto-close the period after approval
     try {
       await sequelize.query(`

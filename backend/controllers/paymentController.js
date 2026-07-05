@@ -465,6 +465,44 @@ exports.bulkPaymentUpload = async (req, res) => {
       const paymentMethod = method || 'Bank Transfer';
       const statusLabel = autoVerified ? 'verified and recorded' : 'submitted for review';
 
+      // Auto-create a Sector Deposit record for this bulk upload
+      try {
+        const SectorPayment = require('../models/SectorPayment');
+        const { validateSectorFinance } = require('../services/sectorValidationService');
+        
+        let sectorUnitId = req.user?.sectorUnitId;
+        if (!sectorUnitId && memberList.length > 0) {
+          const firstMember = await Member.findOne({ where: { memberId: memberList[0].memberId } });
+          sectorUnitId = firstMember?.sectorUnitId;
+        }
+
+        if (sectorUnitId) {
+          const validation = await validateSectorFinance(sectorUnitId, periodMonth, periodYear, totalSum);
+          
+          await SectorPayment.create({
+            sectorUnitId: Number(sectorUnitId),
+            billingMonth: Number(periodMonth),
+            billingYear: Number(periodYear),
+            totalAmount: totalSum,
+            bankName: bankName || 'Commercial Bank of Ethiopia',
+            transactionId: transactionId || null,
+            receiptFile: receiptFileName,
+            approvalStatus: autoVerified ? 'APPROVED' : 'PENDING',
+            notes: req.body.notes || 'Auto-generated from Bulk Payment Upload',
+            uploadedBy: req.user?.id || 1,
+            expectedRevenue: validation.expectedRevenue || null,
+            collectedAmount: validation.collectedAmount || null,
+            approvedDeposits: validation.approvedDeposits || null,
+            remainingBalance: validation.remainingBalance || null,
+            validationDifference: validation.validationDifference || null,
+            validationStatus: validation.validationStatus || null,
+            isClosed: false
+          });
+        }
+      } catch (spError) {
+        console.error('Failed to auto-create SectorPayment from bulk upload:', spError);
+      }
+
       sendEmail({
         to: req.user?.email,
         subject: `Bulk Payment ${statusLabel === 'verified and recorded' ? 'Confirmed' : 'Submitted'} - ${count} Members`,

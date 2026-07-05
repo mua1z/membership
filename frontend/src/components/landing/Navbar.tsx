@@ -120,7 +120,7 @@ export default function Navbar({ scrolled, navLinks }: NavbarProps) {
                       </span>
                     </button>
                     <button
-                      onClick={() => { window.open('#', '_blank'); setLoginDropdownOpen(false); }}
+                      onClick={() => { window.open('https://partys.diredawa.et/', '_blank'); setLoginDropdownOpen(false); }}
                       className="w-full flex items-center gap-3 px-5 py-3.5 text-left text-sm font-bold text-slate-700 hover:bg-[#0B5D3B]/5 hover:text-[#0B5D3B] transition-colors"
                     >
                       <ExternalLink className="w-4 h-4 text-[#0B5D3B]" />
@@ -198,7 +198,7 @@ export default function Navbar({ scrolled, navLinks }: NavbarProps) {
                 Membership Management
               </button>
               <button
-                onClick={() => { window.open('#', '_blank'); setMobileMenuOpen(false); }}
+                onClick={() => { window.open('https://partys.diredawa.et/', '_blank'); setMobileMenuOpen(false); }}
                 className="w-full py-4 border-2 border-[#0B5D3B] text-[#0B5D3B] font-black uppercase tracking-[0.2em] rounded-xl text-sm flex items-center justify-center gap-3 hover:bg-[#0B5D3B]/5 transition-colors"
               >
                 <ExternalLink className="w-4 h-4" />

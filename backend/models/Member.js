@@ -108,7 +108,6 @@ const Member = sequelize.define('Member', {
   tableName: 'members',
   timestamps: true,
   indexes: [
-    { fields: ['memberId'] },
     { fields: ['phone'] },
     { fields: ['branch', 'membershipType'] },
     { fields: ['status', 'paymentStatus'] }

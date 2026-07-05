@@ -48,7 +48,6 @@ const Payment = sequelize.define('Payment', {
   tableName: 'payments',
   timestamps: true,
   indexes: [
-    { fields: ['receiptId'] },
     { fields: ['memberId', 'periodYear', 'periodMonth'] },
     { fields: ['paymentDate'] }
   ]
