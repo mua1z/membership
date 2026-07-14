@@ -2,6 +2,7 @@
   "name": "mfc-pp-dd-branch",
   "version": "1.0.0",
   "description": "Membership Fee Contribution For Prosperity Party Dire Dawa Branch Office - Full Stack App",
+  "main": "backend/server.js",
   "scripts": {
     "build": "bash build.sh",
     "start": "node backend/server.js",
