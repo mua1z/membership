@@ -125,7 +125,8 @@ const connectDB = async (retries = 5) => {
         UserDashboardPreference.belongsTo(User, { foreignKey: 'userId', as: 'user' });
       }
 
-      await sequelize.sync({ alter: false });
+      // alter:true → creates missing tables & adds missing columns, never drops data
+      await sequelize.sync({ alter: true });
       if (DEBUG_DB) console.log('DB tables synced');
 
       return;
