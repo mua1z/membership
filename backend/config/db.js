@@ -67,28 +67,37 @@ const connectDB = async (retries = 5) => {
 
       if (!associationsDefined) {
         associationsDefined = true;
-        require('../models/User');
-        const SectorType         = require('../models/SectorType');
-        const SectorUnit         = require('../models/SectorUnit');
-        const MemberCategory     = require('../models/MemberCategory');
-        const SectorUnitCategory = require('../models/SectorUnitCategory');
+
+        // ── Load ALL models so Sequelize knows every table to create ──────────
+        const User                  = require('../models/User');
+        const SectorType            = require('../models/SectorType');
+        const SectorUnit            = require('../models/SectorUnit');
+        const MemberCategory        = require('../models/MemberCategory');
+        const SectorUnitCategory    = require('../models/SectorUnitCategory');
         require('../models/Member');
         require('../models/Contribution');
         require('../models/Payment');
         require('../models/Receipt');
         require('../models/Setting');
-        const SectorPayment      = require('../models/SectorPayment');
+        const SectorPayment         = require('../models/SectorPayment');
         const SectorPaymentAuditLog = require('../models/SectorPaymentAuditLog');
-        const User               = require('../models/User');
 
-        // New AI Copilot Models
-        const Conversation       = require('../models/Conversation');
-        const Message            = require('../models/Message');
-        const ConversationMetadata = require('../models/ConversationMetadata');
-        const Notification       = require('../models/Notification');
-        const AIActivityLog      = require('../models/AIActivityLog');
+        // AI Copilot Models
+        const Conversation            = require('../models/Conversation');
+        const Message                 = require('../models/Message');
+        const ConversationMetadata    = require('../models/ConversationMetadata');
+        const Notification            = require('../models/Notification');
+        const AIActivityLog           = require('../models/AIActivityLog');
         const UserDashboardPreference = require('../models/UserDashboardPreference');
 
+        // Previously missing models — these tables were never being created!
+        require('../models/AuditLog');
+        require('../models/LandingPageContent');
+        require('../models/LandingPageImage');
+        require('../models/News');
+        require('../models/VerifyEtPayment');
+
+        // ── Associations ──────────────────────────────────────────────────────
         SectorType.hasMany(SectorUnit, { foreignKey: 'sectorTypeId', as: 'units' });
         SectorUnit.belongsTo(SectorType, { foreignKey: 'sectorTypeId', as: 'sectorType' });
 
@@ -125,7 +134,10 @@ const connectDB = async (retries = 5) => {
         UserDashboardPreference.belongsTo(User, { foreignKey: 'userId', as: 'user' });
       }
 
-      // alter:true → creates missing tables & adds missing columns, never drops data
+      // ── Sync: creates ALL missing tables, adds missing columns, never drops data
+      // Pass 1: create any tables that don't exist yet (safe, no alter)
+      await sequelize.sync({ force: false });
+      // Pass 2: alter existing tables to match current model schema
       await sequelize.sync({ alter: true });
       if (DEBUG_DB) console.log('DB tables synced');
 
