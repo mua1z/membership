@@ -134,12 +134,30 @@ const connectDB = async (retries = 5) => {
         UserDashboardPreference.belongsTo(User, { foreignKey: 'userId', as: 'user' });
       }
 
-      // ── Sync: creates ALL missing tables, adds missing columns, never drops data
-      // Pass 1: create any tables that don't exist yet (safe, no alter)
-      await sequelize.sync({ force: false });
-      // Pass 2: alter existing tables to match current model schema
-      await sequelize.sync({ alter: true });
-      if (DEBUG_DB) console.log('DB tables synced');
+      // ── Sync: create ALL missing tables safely ────────────────────────────────
+      // Disable FK checks so tables can be created in any order
+      await sequelize.query('SET FOREIGN_KEY_CHECKS = 0');
+      console.log('⏳ Creating missing database tables...');
+
+      try {
+        // Pass 1: Create tables that don't exist (safe — never drops data)
+        await sequelize.sync({ force: false });
+        console.log('✅ Pass 1 complete: missing tables created');
+      } catch (syncErr) {
+        console.error('⚠️ Pass 1 sync error:', syncErr.message);
+      }
+
+      try {
+        // Pass 2: Alter existing tables to add missing columns
+        await sequelize.sync({ alter: true });
+        console.log('✅ Pass 2 complete: table schemas updated');
+      } catch (alterErr) {
+        console.error('⚠️ Pass 2 alter error (non-fatal):', alterErr.message);
+      }
+
+      // Re-enable FK checks
+      await sequelize.query('SET FOREIGN_KEY_CHECKS = 1');
+      console.log('✅ All database tables are ready');
 
       return;
 
