@@ -133,6 +133,7 @@ export default function Payments() {
   const [confirmDeletePayment, setConfirmDeletePayment] = useState<{ open: boolean; id: string | number | null }>({ open: false, id: null })
   const [confirmBulkDeletePayments, setConfirmBulkDeletePayments] = useState(false)
   const [confirmDeleteAllPayments, setConfirmDeleteAllPayments] = useState(false)
+  const [confirmDeleteSectorPayment, setConfirmDeleteSectorPayment] = useState<{ open: boolean; id: string | number | null }>({ open: false, id: null })
 
   // Sector Deposits
   const [sectorPayments, setSectorPayments] = useState<any[]>([])
@@ -462,6 +463,23 @@ export default function Payments() {
       else fetchPayments();
     } catch (err: any) {
       console.error(err);
+    }
+  }
+
+  const handleDeleteSectorPayment = async (paymentId: string | number) => {
+    setConfirmDeleteSectorPayment({ open: true, id: paymentId })
+  }
+
+  const doDeleteSectorPayment = async () => {
+    const paymentId = confirmDeleteSectorPayment.id
+    setConfirmDeleteSectorPayment({ open: false, id: null })
+    if (!paymentId) return
+    try {
+      await api.delete(`/sector-payments/${paymentId}`)
+      fetchSectorPayments()
+      toast.success('Deleted', 'Sector deposit deleted successfully')
+    } catch (err: any) {
+      toast.error('Error', err.response?.data?.message || 'Error deleting deposit')
     }
   }
 
@@ -1276,6 +1294,15 @@ export default function Payments() {
                               <Edit className="w-4 h-4" />
                             </button>
                           )}
+                          {user?.role === 'admin' && (
+                            <button
+                              onClick={() => handleDeleteSectorPayment(sp._id || sp.id)}
+                              className="p-1.5 hover:bg-red-100 dark:hover:bg-red-900/20 text-red-600 rounded transition-colors"
+                              title={t('common.delete')}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -1372,6 +1399,17 @@ export default function Payments() {
         cancelLabel={t('common.cancel')}
         onConfirm={doDeletePayment}
         onCancel={() => setConfirmDeletePayment({ open: false, id: null })}
+      />
+
+      <ConfirmDialog
+        open={confirmDeleteSectorPayment.open}
+        variant="danger"
+        title="Delete Sector Deposit"
+        message="Are you sure you want to delete this sector deposit? This action cannot be undone."
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        onConfirm={doDeleteSectorPayment}
+        onCancel={() => setConfirmDeleteSectorPayment({ open: false, id: null })}
       />
 
       <ConfirmDialog

@@ -120,7 +120,7 @@ export default function Layout() {
       <aside
         className={`fixed top-0 left-0 z-40 h-screen flex flex-col transition-transform duration-300 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } bg-ebony border-r border-white/5 w-64 hidden lg:flex`}
+        } bg-black border-r border-white/10 w-64 hidden lg:flex`}
       >
         {/* Logo Section */}
         <div className="flex flex-col items-center justify-center pt-7 pb-6 px-4 border-b border-white/5">
@@ -243,7 +243,7 @@ export default function Layout() {
       </div>
 
       {/* Mobile Bottom Navigation */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-ebony/95 backdrop-blur-xl border-t border-white/5 px-2 py-1.5 flex items-center justify-between safe-area-bottom overflow-x-auto no-scrollbar">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-[#34495e]/95 backdrop-blur-xl border-t border-white/10 px-2 py-1.5 flex items-center justify-between safe-area-bottom overflow-x-auto no-scrollbar">
         {navItems.map((item) => (
           <Link
             key={item.path}

@@ -42,10 +42,10 @@ const INSTITUTIONS = [
   ['Dire Dawa University', null],
 ];
 
-const URBAN_WOREDAS = ['Woreda 1','Woreda 2','Woreda 3','Woreda 4','Woreda 5','Woreda 6','Woreda 7','Woreda 8','Woreda 9'];
-const SECONDARY_SCHOOLS = ['Dire Dawa Comprehensive Secondary School','Addis Ketema Secondary School','Legehare Secondary School','Afetisa Secondary School','Mariam Sefer Secondary School','Sabian Secondary School','Addisu Secondary School','Melka Jebdu Secondary School'];
-const HEALTH_INSTITUTIONS = ['Dil Chora Hospital','Sabian Hospital','Legehare Health Center','Dire Dawa Health Center','Gendekore Health Center','Addis Ketema Health Center','Goro Health Center','Melka Health Center','Industrial Village Health Center','Dechatu Health Center','Gende Gerade Health Center'];
-const RURAL_CLUSTERS = ['Biyyo Awwalle Cluster','Wahel Cluster','Aseliso Cluster','Jeldessa Cluster'];
+const URBAN_WOREDAS = ['Woreda 1', 'Woreda 2', 'Woreda 3', 'Woreda 4', 'Woreda 5', 'Woreda 6', 'Woreda 7', 'Woreda 8', 'Woreda 9'];
+const SECONDARY_SCHOOLS = ['Dire Dawa Comprehensive Secondary School', 'Addis Ketema Secondary School', 'Legehare Secondary School', 'Afetisa Secondary School', 'Mariam Sefer Secondary School', 'Sabian Secondary School', 'Addisu Secondary School', 'Melka Jebdu Secondary School'];
+const HEALTH_INSTITUTIONS = ['Dil Chora Hospital', 'Sabian Hospital', 'Legehare Health Center', 'Dire Dawa Health Center', 'Gendekore Health Center', 'Addis Ketema Health Center', 'Goro Health Center', 'Melka Health Center', 'Industrial Village Health Center', 'Dechatu Health Center', 'Gende Gerade Health Center'];
+const RURAL_CLUSTERS = ['Biyyo Awwalle Cluster', 'Wahel Cluster', 'Aseliso Cluster', 'Jeldessa Cluster'];
 
 // ─── Landing page content defaults ────────────────────────────────────────────
 const LANDING_CONTENT = {
@@ -324,7 +324,7 @@ async function seedUsers() {
 
   // Super Admin role transferred to System Admin — only minimal users are seeded.
   const usersToCreate = [
-    { username: 'seyfedin',  email: 'seyfedin@pp-diredawa.org', password: 'seyfedin@2026', fullName: 'Seyfedin',                      role: 'admin' },
+    { username: 'seyfedin', email: 'seyfedin@pp-diredawa.org', password: 'seyfedin@2026', fullName: 'Seyfedin', role: 'admin' },
   ];
 
   let count = 0;

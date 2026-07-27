@@ -15,7 +15,8 @@ const {
   validateDeposit,
   getClosingStatus,
   closePeriod,
-  openPeriod
+  openPeriod,
+  deletePayment
 } = require('../controllers/sectorPaymentController');
 const { auth, authorize } = require('../middleware/auth');
 
@@ -48,5 +49,6 @@ router.put('/:id/revoke', authorize('admin'), revokePayment);
 // Edit and correction request
 router.put('/:id', authorize('admin', 'sector_officer'), uploadReceipt.single('receipt'), updateSectorPayment);
 router.put('/:id/request-correction', authorize('sector_officer'), uploadReceipt.single('receipt'), requestCorrection);
+router.delete('/:id', authorize('admin'), deletePayment);
 
 module.exports = router;

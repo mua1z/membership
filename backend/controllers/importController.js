@@ -85,7 +85,12 @@ exports.importMembers = async (req, res) => {
 
     // Intelligent Fallback: If standard parsing fails due to merged cells or missing headers (common in official Amharic reports),
     // we scan the raw array for data row signatures (Name -> Sex(ወ/ሴ) -> Numbers).
-    const isCleanTemplate = data.length > 0 && Object.keys(data[0]).some(k => k.toLowerCase().includes('name') || k.includes('ስም') || k.toLowerCase().includes('sex') || k.includes('ጾታ'));
+    const isCleanTemplate = data.length > 0 && Object.keys(data[0]).some(k => {
+      const lk = k.toLowerCase();
+      return lk.includes('name') || k.includes('ስም') || 
+             lk.includes('sex') || k.includes('ጾታ') || k.includes('ፆታ') ||
+             lk.includes('salary') || k.includes('ደመወዝ') || k.includes('ደሞዝ');
+    });
     
     if (!isCleanTemplate) {
       const rawData = xlsx.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1 });
@@ -130,11 +135,11 @@ exports.importMembers = async (req, res) => {
             }
             
             const salaryVal = financialVals[0] || 0;
-            const taxVal = financialVals[1] || 0;
-            const pensionVal = financialVals[2] || 0;
-            const netVal = financialVals[3] || 0;
-            const percVal = financialVals[4] || 0;
-            const feeVal = financialVals[5] || 0;
+            const taxVal = (financialVals.length > 1 && financialVals[1] > 0) ? financialVals[1] : undefined;
+            const pensionVal = (financialVals.length > 2 && financialVals[2] > 0) ? financialVals[2] : undefined;
+            const netVal = (financialVals.length > 3 && financialVals[3] > 0) ? financialVals[3] : undefined;
+            const percVal = (financialVals.length > 4 && financialVals[4] > 0) ? financialVals[4] : undefined;
+            const feeVal = (financialVals.length > 5 && financialVals[5] > 0) ? financialVals[5] : undefined;
             
             let phoneVal = '';
             for (let c = 0; c < row.length; c++) {
@@ -144,17 +149,19 @@ exports.importMembers = async (req, res) => {
                }
             }
             
-            data.push({
+            const rowObj = {
                "Full Name": nameVal,
                "Sex": sexVal,
-               "Gross Salary": salaryVal,
-               "Income Tax": taxVal,
-               "Pension": pensionVal,
-               "Net Salary": netVal,
-               "Contribution %": percVal,
-               "Monthly Contribution": feeVal,
-               "Phone": phoneVal
-            });
+               "Gross Salary": salaryVal
+            };
+            if (taxVal !== undefined) rowObj["Income Tax"] = taxVal;
+            if (pensionVal !== undefined) rowObj["Pension"] = pensionVal;
+            if (netVal !== undefined) rowObj["Net Salary"] = netVal;
+            if (percVal !== undefined) rowObj["Contribution %"] = percVal;
+            if (feeVal !== undefined) rowObj["Monthly Contribution"] = feeVal;
+            if (phoneVal) rowObj["Phone"] = phoneVal;
+
+            data.push(rowObj);
           }
         }
       }
@@ -315,24 +322,24 @@ exports.importMembers = async (req, res) => {
         const taxExempt = exemptUnit && TAX_EXEMPT_UNIT_NAMES.includes(exemptUnit.name);
         const classification = ClassificationEngine.autoClassifyAndCalculate(memberData, settings, taxExempt);
 
-        const manualPercentage = Number(row['Contribution %'] || row.ContributionPercentage || row['የክፍያ % መጠን']);
-        const manualMonthlyFee = Number(row['Monthly Contribution (ETB)'] || row.MonthlyContribution || row['የአባሉ ወርሃዊ ክፍያ']);
-        const manualNetSalary  = Number(row['Net Monthly Salary (ETB)']   || row.NetSalary || row['የተጣራ የወር ደመወዝ መጠን']);
-        const manualTax        = Number(row['Income Tax (ETB)']           || row.IncomeTax || row['የደመወዝ ገቢ ግብር'] || row['የደሞዝ ገቢ ግብር']);
-        const manualPension    = Number(row['Pension (ETB)']              || row.Pension || row['ጡረታ']);
+        const manualPercentage = memberData.manualFinancial?.percentage;
+        const manualMonthlyFee = memberData.manualFinancial?.monthlyFee;
+        const manualNetSalary  = memberData.manualFinancial?.netSalary;
+        const manualTax        = memberData.manualFinancial?.taxDeduction;
+        const manualPension    = memberData.manualFinancial?.pensionDeduction;
 
-        if (!isNaN(manualMonthlyFee) && manualMonthlyFee > 0) {
+        if (manualMonthlyFee && manualMonthlyFee > 0) {
           classification.monthlyFee = manualMonthlyFee;
           classification.annualFee  = manualMonthlyFee * 12;
           classification.hqShare    = Math.round(classification.annualFee * 0.20);
           classification.branchShare = Math.round(classification.annualFee * 0.80);
         }
-        if (!isNaN(manualPercentage) && manualPercentage > 0) classification.percentage = manualPercentage;
+        if (manualPercentage && manualPercentage > 0) classification.percentage = manualPercentage;
         
-        if (!isNaN(manualNetSalary) && manualNetSalary > 0) {
+        if (manualNetSalary && manualNetSalary > 0) {
           classification.netSalary.netSalary = manualNetSalary;
-          classification.netSalary.taxDeduction = !isNaN(manualTax) ? manualTax : classification.netSalary.taxDeduction;
-          classification.netSalary.pensionDeduction = !isNaN(manualPension) ? manualPension : classification.netSalary.pensionDeduction;
+          classification.netSalary.taxDeduction = (manualTax && manualTax > 0) ? manualTax : classification.netSalary.taxDeduction;
+          classification.netSalary.pensionDeduction = (manualPension && manualPension > 0) ? manualPension : classification.netSalary.pensionDeduction;
           classification.netSalary.contributionFee = classification.monthlyFee;
           classification.netSalary.finalNetSalary = Math.max(0, classification.netSalary.netSalary - classification.monthlyFee);
         }
@@ -478,6 +485,13 @@ function mapExcelRowToMember(rawRow) {
     else membershipType = 'Non-Salary';
   }
 
+  const getOptNum = (keys) => {
+    const v = getVal(keys);
+    if (v === undefined || v === null || v === '') return undefined;
+    const num = Number(String(v).replace(/,/g, '').replace('%', '').trim());
+    return (!isNaN(num) && num > 0) ? num : undefined;
+  };
+
   return {
     fullName,
     gender,
@@ -499,11 +513,11 @@ function mapExcelRowToMember(rawRow) {
     },
     // Manual overrides for financial results if provided in Excel
     manualFinancial: {
-      taxDeduction:     Number(getVal(['Income Tax', 'Tax', 'የደመወዝ ገቢ ግብር', 'የደሞዝ ገቢ ግብር', 'ገቢ ግብር', 'ግብር'])),
-      pensionDeduction: Number(getVal(['Pension', 'Pension (7%)', 'ጡረታ', 'ጡረታ 7%'])),
-      netSalary:        Number(getVal(['Net Salary', 'NetSalary', 'የተጣራ የወር ደመወዝ መጠን', 'የተጣራ ደመወዝ'])),
-      percentage:       parseFloat(String(getVal(['Contribution %', 'Percentage', 'የመዋጮ % መጠን', 'መዋጮ %', 'የክፍያ % መጠን']) || '').replace('%', '')),
-      monthlyFee:       Number(getVal(['Monthly Contribution (ETB)', 'Monthly Contribution', 'Monthly Fee', 'የአባሉ ወርሃዊ ክፍያ', 'ወርሃዊ መዋጮ', 'መዋጮ', 'የአባሉ ወርሃዊ መዋጮ', 'Contribution In ETB']))
+      taxDeduction:     getOptNum(['Income Tax', 'Income Tax (ETB)', 'Tax', 'የደመወዝ ገቢ ግብር', 'የደሞዝ ገቢ ግብር', 'ገቢ ግብር', 'ግብር', 'ገቢ ግብር (ETB)']),
+      pensionDeduction: getOptNum(['Pension', 'Pension (ETB)', 'Pension (7%)', 'ጡረታ', 'ጡረታ 7%', 'ጡረታ (ETB)']),
+      netSalary:        getOptNum(['Net Salary', 'Net Salary (ETB)', 'Net Monthly Salary (ETB)', 'NetSalary', 'የተጣራ የወር ደመወዝ መጠን', 'የተጣራ ደመወዝ', 'የተጣራ ደሞዝ']),
+      percentage:       getOptNum(['Contribution %', 'Percentage', 'የመዋጮ % መጠን', 'መዋጮ %', 'የክፍያ % መጠን', 'የመዋጮ %']),
+      monthlyFee:       getOptNum(['Monthly Contribution (ETB)', 'Monthly Contribution', 'Monthly Fee', 'የአባሉ ወርሃዊ ክፍያ', 'ወርሃዊ መዋጮ', 'መዋጮ', 'የአባሉ ወርሃዊ መዋጮ', 'Contribution In ETB', 'ወርሃዊ ክፍያ'])
     },
     status:           'Active',
     registrationDate: new Date()

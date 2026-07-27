@@ -879,3 +879,79 @@ exports.openPeriod = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+// ── Delete sector payment ─────────────────────────────────────────────────
+exports.deletePayment = async (req, res) => {
+  const t = await sequelize.transaction();
+  try {
+    const Payment = require('../models/Payment');
+    const Receipt = require('../models/Receipt');
+    const Member  = require('../models/Member');
+
+    const sp = await SectorPayment.findByPk(req.params.id, { transaction: t });
+    if (!sp) {
+      await t.rollback();
+      return res.status(404).json({ success: false, message: 'Sector payment not found.' });
+    }
+
+    const isClosed = await isPeriodClosed(sp.sectorUnitId, sp.billingMonth, sp.billingYear);
+    if (isClosed && !['super_admin', 'admin'].includes(req.user.role)) {
+      await t.rollback();
+      return res.status(403).json({ success: false, message: 'This period is financially closed. Cannot delete deposits in closed periods.' });
+    }
+
+    // 1. Find all payment history for this sector unit + billing period (via raw SQL to avoid Sequelize association issues)
+    const [relatedPaymentRows] = await sequelize.query(
+      `SELECT p.id, p.memberDbId FROM payments p
+       JOIN members m ON p.memberDbId = m.id
+       WHERE m.sectorUnitId = :sectorUnitId
+         AND p.periodMonth = :billingMonth
+         AND p.periodYear  = :billingYear`,
+      {
+        replacements: { sectorUnitId: sp.sectorUnitId, billingMonth: sp.billingMonth, billingYear: sp.billingYear },
+        transaction: t
+      }
+    );
+
+    const paymentIds = relatedPaymentRows.map(r => r.id);
+    const memberDbIds = [...new Set(relatedPaymentRows.map(r => r.memberDbId))];
+
+    // 2. Delete receipts linked to those payments
+    if (paymentIds.length > 0) {
+      await Receipt.destroy({ where: { paymentDbId: paymentIds }, transaction: t });
+      await Payment.destroy({ where: { id: paymentIds }, transaction: t });
+    }
+
+    // 3. Revert member paymentStatus to Unpaid for affected members
+    for (const memberDbId of memberDbIds) {
+      const remaining = await Payment.count({
+        where: { memberDbId, periodMonth: sp.billingMonth, periodYear: sp.billingYear },
+        transaction: t
+      });
+      if (remaining === 0) {
+        await Member.update({ paymentStatus: 'Unpaid' }, { where: { id: memberDbId }, transaction: t });
+      }
+    }
+
+    // 4. Delete sector deposit receipt file if exists
+    if (sp.receiptFile) {
+      const oldPath = path.join(__dirname, '..', 'uploads', 'receipts', sp.receiptFile);
+      if (fs.existsSync(oldPath)) {
+        try { fs.unlinkSync(oldPath); } catch (e) { console.error('Failed to delete receipt file:', e); }
+      }
+    }
+
+    // 5. Delete audit logs first (foreign key), then the sector payment itself
+    await SectorPaymentAuditLog.destroy({ where: { sectorPaymentId: sp.id }, transaction: t });
+    await sp.destroy({ transaction: t });
+
+    await t.commit();
+    res.json({
+      success: true,
+      message: `Sector deposit deleted. ${paymentIds.length} payment record(s) removed and ${memberDbIds.length} member(s) reverted to Unpaid.`
+    });
+  } catch (error) {
+    await t.rollback();
+    res.status(500).json({ success: false, message: error.message });
+  }
+};

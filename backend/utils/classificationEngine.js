@@ -190,16 +190,16 @@ class ClassificationEngine {
       else percentage = 2.0;
     }
     
-    // Override percentage if manually provided (e.g. from Excel)
-    if (manualFinancial && manualFinancial.percentage) {
+    // Override percentage if manually provided (e.g. from Excel) with positive number
+    if (manualFinancial && manualFinancial.percentage && !isNaN(manualFinancial.percentage) && Number(manualFinancial.percentage) > 0) {
       percentage = Number(manualFinancial.percentage);
     }
 
     // Apply percentage to the chosen salary base
     monthlyFee = salaryToUse * (percentage / 100);
 
-    // Override monthly fee if manually provided
-    if (manualFinancial && manualFinancial.monthlyFee) {
+    // Override monthly fee if manually provided with positive number
+    if (manualFinancial && manualFinancial.monthlyFee && !isNaN(manualFinancial.monthlyFee) && Number(manualFinancial.monthlyFee) > 0) {
       monthlyFee = Number(manualFinancial.monthlyFee);
     }
 
@@ -395,16 +395,16 @@ class ClassificationEngine {
     const salary = memberData.financial?.salary || 0;
     const netSalaryData = this.calculateNetSalary(salary, settings, taxExempt);
     
-    // Manual overrides for deductions if provided
+    // Manual overrides for deductions if provided (only when positive > 0)
     if (memberData.manualFinancial) {
-      if (memberData.manualFinancial.taxDeduction !== undefined && !isNaN(memberData.manualFinancial.taxDeduction)) {
-        netSalaryData.taxDeduction = memberData.manualFinancial.taxDeduction;
+      if (memberData.manualFinancial.taxDeduction !== undefined && !isNaN(memberData.manualFinancial.taxDeduction) && Number(memberData.manualFinancial.taxDeduction) > 0) {
+        netSalaryData.taxDeduction = Number(memberData.manualFinancial.taxDeduction);
       }
-      if (memberData.manualFinancial.pensionDeduction !== undefined && !isNaN(memberData.manualFinancial.pensionDeduction)) {
-        netSalaryData.pensionDeduction = memberData.manualFinancial.pensionDeduction;
+      if (memberData.manualFinancial.pensionDeduction !== undefined && !isNaN(memberData.manualFinancial.pensionDeduction) && Number(memberData.manualFinancial.pensionDeduction) > 0) {
+        netSalaryData.pensionDeduction = Number(memberData.manualFinancial.pensionDeduction);
       }
-      if (memberData.manualFinancial.netSalary !== undefined && !isNaN(memberData.manualFinancial.netSalary)) {
-        netSalaryData.netSalary = memberData.manualFinancial.netSalary;
+      if (memberData.manualFinancial.netSalary !== undefined && !isNaN(memberData.manualFinancial.netSalary) && Number(memberData.manualFinancial.netSalary) > 0) {
+        netSalaryData.netSalary = Number(memberData.manualFinancial.netSalary);
       }
       netSalaryData.totalDeductions = netSalaryData.pensionDeduction + netSalaryData.taxDeduction;
     }
