@@ -1,3 +1,4 @@
+// controllers/paymentController.js - Payment Controller (MySQL / Sequelize)
 const { Op } = require('sequelize');
 const { sequelize } = require('../config/db');
 const Payment  = require('../models/Payment');
@@ -5,8 +6,6 @@ const Receipt  = require('../models/Receipt');
 const Member   = require('../models/Member');
 const User     = require('../models/User');
 const Contribution = require('../models/Contribution');
-const SectorPayment = require('../models/SectorPayment');
-const SectorPaymentAuditLog = require('../models/SectorPaymentAuditLog');
 const { getEthiopianYear, getEthiopianMonth } = require('../utils/ethiopianCalendar');
 const { createAuditLog } = require('../utils/auditLogger');
 const { sendEmail } = require('../utils/emailService');
@@ -710,68 +709,23 @@ exports.updatePayment = async (req, res) => {
 
 // ─── Delete Payment ──────────────────────────────────────────────────────────
 exports.deletePayment = async (req, res) => {
-  const t = await sequelize.transaction();
   try {
-    const payment = await Payment.findByPk(req.params.id, { transaction: t });
-    if (!payment) {
-      await t.rollback();
-      return res.status(404).json({ success: false, message: 'Payment not found.' });
-    }
+    const payment = await Payment.findByPk(req.params.id);
+    if (!payment) return res.status(404).json({ success: false, message: 'Payment not found.' });
 
-    const member = await Member.findByPk(payment.memberDbId, { transaction: t });
+    const member = await Member.findByPk(payment.memberDbId);
     if (req.user?.role === 'sector_officer' && req.user.sectorUnitId) {
       if (member && member.sectorUnitId !== req.user.sectorUnitId) {
-        await t.rollback();
         return res.status(403).json({ success: false, message: 'Access denied: You can only delete payments for your assigned sector unit.' });
       }
     }
 
-    // Delete linked receipts first
-    await Receipt.destroy({ where: { paymentDbId: payment.id }, transaction: t });
-
-    // Delete the payment itself
-    await payment.destroy({ transaction: t });
-
-    // Revert member payment status to Unpaid (only if no other paid payments remain for this period)
-    if (member) {
-      const remainingPayments = await Payment.count({
-        where: { memberDbId: member.id, periodMonth: payment.periodMonth, periodYear: payment.periodYear },
-        transaction: t
-      });
-      if (remainingPayments === 0) {
-        await member.update({ paymentStatus: 'Unpaid' }, { transaction: t });
-      }
-    }
-
-    // Also delete related sector deposit(s) for the same sector unit and billing period
-    if (member && member.sectorUnitId) {
-      const relatedSectorPayments = await SectorPayment.findAll({
-        where: {
-          sectorUnitId: member.sectorUnitId,
-          billingMonth: payment.periodMonth,
-          billingYear: payment.periodYear
-        },
-        transaction: t
-      });
-
-      for (const sp of relatedSectorPayments) {
-        // Delete audit logs first (foreign key)
-        await SectorPaymentAuditLog.destroy({ where: { sectorPaymentId: sp.id }, transaction: t });
-        // Delete receipt file if exists
-        if (sp.receiptFile) {
-          const filePath = require('path').join(__dirname, '..', 'uploads', 'receipts', sp.receiptFile);
-          if (require('fs').existsSync(filePath)) {
-            try { require('fs').unlinkSync(filePath); } catch (e) { console.error('Failed to delete sector receipt file:', e); }
-          }
-        }
-        await sp.destroy({ transaction: t });
-      }
-    }
-
-    await t.commit();
-    res.json({ success: true, message: 'Payment deleted, member status reverted to Unpaid, and related sector deposit removed.' });
+    // Also delete the receipt if it exists
+    await Receipt.destroy({ where: { paymentDbId: payment.id } });
+    await payment.destroy();
+    
+    res.json({ success: true, message: 'Payment deleted successfully' });
   } catch (error) {
-    await t.rollback();
     res.status(500).json({ success: false, message: error.message });
   }
 };
