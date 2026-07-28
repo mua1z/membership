@@ -85,7 +85,10 @@ exports.importMembers = async (req, res) => {
 
     // Intelligent Fallback: If standard parsing fails due to merged cells or missing headers (common in official Amharic reports),
     // we scan the raw array for data row signatures (Name -> Sex(ወ/ሴ) -> Numbers).
-    const isCleanTemplate = data.length > 0 && Object.keys(data[0]).some(k => {
+    // Also reject cases where keys are __EMPTY* (merged header row produces these junk keys).
+    const firstRowKeys = data.length > 0 ? Object.keys(data[0]) : [];
+    const hasJunkKeys = firstRowKeys.some(k => k.startsWith('__EMPTY'));
+    const isCleanTemplate = !hasJunkKeys && data.length > 0 && firstRowKeys.some(k => {
       const lk = k.toLowerCase();
       return lk.includes('name') || k.includes('ስም') || 
              lk.includes('sex') || k.includes('ጾታ') || k.includes('ፆታ') ||
@@ -421,9 +424,24 @@ function mapExcelRowToMember(rawRow) {
   });
 
   const getVal = (keys) => {
+    // 1. Exact match first
     for (const key of keys) {
       const normalizedKey = key.toLowerCase();
-      if (row[normalizedKey] !== undefined) return row[normalizedKey];
+      if (row[normalizedKey] !== undefined && row[normalizedKey] !== null && row[normalizedKey] !== '') {
+        return row[normalizedKey];
+      }
+    }
+    // 2. Fuzzy match (includes)
+    const rowKeys = Object.keys(row);
+    for (const key of keys) {
+      const normalizedKey = key.toLowerCase();
+      for (const rk of rowKeys) {
+        if (rk.includes(normalizedKey)) {
+          if (row[rk] !== undefined && row[rk] !== null && row[rk] !== '') {
+            return row[rk];
+          }
+        }
+      }
     }
     return undefined;
   };
