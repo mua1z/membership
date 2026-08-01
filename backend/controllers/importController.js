@@ -356,6 +356,15 @@ exports.importMembers = async (req, res) => {
            }
         }
 
+        // --- PASS SECTOR TYPE NAME FOR WING CLASSIFICATION ---
+        if (sectorUnitId) {
+           const unit = allSectorUnits.find(u => u.id === sectorUnitId);
+           if (unit) {
+              const typeObj = allSectorTypes.find(t => t.id === unit.sectorTypeId);
+              if (typeObj) memberData.sectorTypeName = typeObj.name;
+           }
+        }
+
         if (memberData.financial.salary < 0) {
           results.warnings.push({ row: rowNum, warning: 'Invalid salary value, using 0' });
           memberData.financial.salary = 0;

@@ -121,15 +121,23 @@ export default function FastEntryModal({ onClose, onSuccess, sectorTypes, catego
     if (catName.includes('wing')) {
       const wingSettings = currentSettings?.contributionRules?.wing || {};
       const isEmployeeWing = catName.includes('employee');
-      if (gross >= 1000 && isEmployeeWing) {
-        if (gross <= 3000) monthlyFee = wingSettings.salary_1k_3k ?? 2;
-        else if (gross <= 5000) monthlyFee = wingSettings.salary_3k_5k ?? 5;
-        else if (gross <= 10000) monthlyFee = wingSettings.salary_5k_10k ?? 10;
-        else monthlyFee = wingSettings.salary_10k_plus ?? 20;
-      } else if (gross > 0) {
+      const isResidentWingCat = catName.includes('resident');
+      const sectorTypeNameLower = selectedSectorType.toLowerCase();
+      const isRuralOrUrbanWoreda = sectorTypeNameLower.includes('rural') || sectorTypeNameLower.includes('woreda');
+
+      if (isEmployeeWing) {
+        // Employee wing: salary-based tiers
+        if (gross >= 1000) {
+          if (gross <= 3000) monthlyFee = wingSettings.salary_1k_3k ?? 2;
+          else if (gross <= 5000) monthlyFee = wingSettings.salary_3k_5k ?? 5;
+          else if (gross <= 10000) monthlyFee = wingSettings.salary_5k_10k ?? 10;
+          else monthlyFee = wingSettings.salary_10k_plus ?? 20;
+        } else {
+          monthlyFee = wingSettings.salary_1k_3k ?? 2;
+        }
+      } else if (isResidentWingCat && isRuralOrUrbanWoreda) {
+        // Urban Resident Youth/Women Wing in Rural Cluster or Urban Woreda → 1 Birr
         monthlyFee = wingSettings.farmer ?? 1;
-      } else if (isEmployeeWing) {
-        monthlyFee = wingSettings.salary_1k_3k ?? 2;
       } else {
         monthlyFee = wingSettings.farmer ?? 1;
       }
@@ -380,6 +388,7 @@ export default function FastEntryModal({ onClose, onSuccess, sectorTypes, catego
         sectorUnitId: Number(selectedSectorId),
         memberCategoryId: Number(selectedCategoryId),
         membershipType: mType,
+        sectorTypeName: selectedSectorType,
         wing: mType === 'Wing' ? { wingType: (selectedCat?.name || '').replace(' Wing', '') } : undefined,
         paymentDay: 1,
         address: { region: 'Dire Dawa', city: 'Dire Dawa', woreda: '01' }

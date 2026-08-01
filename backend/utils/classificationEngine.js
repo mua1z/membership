@@ -63,11 +63,16 @@ class ClassificationEngine {
         const wingSalary     = financial.salary || 0;
         const wSettings      = rules?.wing || {};
         const wTypeName      = String(wing?.wingType || '').toLowerCase();
+        const sectorTypeName = String(memberData.sectorTypeName || '').toLowerCase();
         
         subType = wing?.wingType || wingOccupation || 'General';
 
         // Article 7b (Salary) only if the category name contains 'employee'
         const isEmployeeWing = wTypeName.includes('employee');
+
+        // Urban Resident Youth/Women Wing in Rural Cluster or Urban Woreda → 1 Birr
+        const isResidentWing = wTypeName.includes('resident');
+        const isRuralOrUrbanWoreda = sectorTypeName.includes('rural') || sectorTypeName.includes('woreda');
 
         if (isEmployeeWing) {
           // Article 7b: Salary-based tiers for Employee Wings
@@ -76,6 +81,10 @@ class ClassificationEngine {
           else if (wingSalary <= 10000) monthlyFee = wSettings.salary_5k_10k ?? 10;
           else                          monthlyFee = wSettings.salary_10k_plus ?? 20;
           classificationRuleId = `WING-EMPLOYEE-SAL-${monthlyFee}BIRR`;
+        } else if (isResidentWing && isRuralOrUrbanWoreda) {
+          // Urban Resident Wing (Youth/Women) in Rural Cluster or Urban Woreda → 1 Birr
+          monthlyFee = wSettings.farmer ?? 1;
+          classificationRuleId = 'WING-RESIDENT-RURAL-URBAN';
         } else {
           // Article 8: Occupation-based tiers (no salary or salary < 1000)
           const occ = wingOccupation.toLowerCase();
