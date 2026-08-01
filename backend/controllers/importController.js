@@ -340,8 +340,18 @@ exports.importMembers = async (req, res) => {
            const unit = allSectorUnits.find(u => u.id === sectorUnitId);
            if (unit) {
               const typeObj = allSectorTypes.find(t => t.id === unit.sectorTypeId);
-              if (typeObj && (typeObj.name.toLowerCase().includes('government') || typeObj.name.toLowerCase().includes('institution'))) {
-                 memberData.financial.employmentType = 'Government';
+              if (typeObj) {
+                 const tName = typeObj.name.toLowerCase();
+                 if (
+                    tName.includes('government') || 
+                    tName.includes('institution') ||
+                    tName.includes('cluster') ||
+                    tName.includes('school') ||
+                    tName.includes('woreda') ||
+                    tName.includes('health')
+                 ) {
+                    memberData.financial.employmentType = 'Government';
+                 }
               }
            }
         }
