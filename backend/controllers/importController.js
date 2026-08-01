@@ -179,8 +179,9 @@ exports.importMembers = async (req, res) => {
 
     const results = { success: 0, errors: [], warnings: [], duplicates: [] };
 
-    // Fetch all Sector Units and Categories for lookup
-    const allSectorUnits = await SectorUnit.findAll({ attributes: ['id', 'name'] });
+    // Fetch all Sector Units, Types, and Categories for lookup
+    const allSectorUnits = await SectorUnit.findAll({ attributes: ['id', 'name', 'sectorTypeId'] });
+    const allSectorTypes = await require('../models/SectorType').findAll({ attributes: ['id', 'name'] });
     const allCategories = await MemberCategory.findAll({ attributes: ['id', 'name'] });
     let settings = await Setting.findOne();
     if (!settings) settings = await Setting.create({});
@@ -315,13 +316,43 @@ exports.importMembers = async (req, res) => {
           memberCategoryId = matchedCategory ? matchedCategory.id : null;
         }
 
+        // --- ENFORCE CORRECT MEMBERSHIP TYPE BASED ON SELECTED CATEGORY ---
+        // Just like Fast Entry, we must derive membershipType from the resolved category
+        // otherwise the classification engine will calculate wrong fees.
+        const actualCategory = allCategories.find(c => c.id === memberCategoryId);
+        if (actualCategory) {
+          const catName = (actualCategory.name || '').toLowerCase();
+          let mType = 'Salary-Based';
+          if (catName.includes('wing')) mType = 'Wing';
+          else if (catName.includes('enterprise')) mType = 'Business';
+          else if (catName.includes('student')) mType = 'Student';
+          else if (catName.includes('investor')) mType = 'Investor';
+          else if (catName.includes('resident') || catName.includes('farmer')) mType = 'Non-Salary';
+          
+          memberData.membershipType = mType;
+          if (mType === 'Wing') {
+             memberData.wing = { wingType: actualCategory.name.replace(' Wing', '') };
+          }
+        }
+
+        // --- ENFORCE EMPLOYMENT TYPE FOR GOVERNMENT SECTORS ---
+        if (sectorUnitId && memberData.financial.employmentType === 'Private') {
+           const unit = allSectorUnits.find(u => u.id === sectorUnitId);
+           if (unit) {
+              const typeObj = allSectorTypes.find(t => t.id === unit.sectorTypeId);
+              if (typeObj && (typeObj.name.toLowerCase().includes('government') || typeObj.name.toLowerCase().includes('institution'))) {
+                 memberData.financial.employmentType = 'Government';
+              }
+           }
+        }
+
         if (memberData.financial.salary < 0) {
           results.warnings.push({ row: rowNum, warning: 'Invalid salary value, using 0' });
           memberData.financial.salary = 0;
         }
 
         const TAX_EXEMPT_UNIT_NAMES = ['Prosperity Party Dire Dawa Branch Office'];
-        const exemptUnit = sectorUnitId ? await SectorUnit.findByPk(sectorUnitId) : null;
+        const exemptUnit = sectorUnitId ? allSectorUnits.find(u => u.id === sectorUnitId) : null;
         const taxExempt = exemptUnit && TAX_EXEMPT_UNIT_NAMES.includes(exemptUnit.name);
         const classification = ClassificationEngine.autoClassifyAndCalculate(memberData, settings, taxExempt);
 
@@ -446,6 +477,13 @@ function mapExcelRowToMember(rawRow) {
     return undefined;
   };
 
+  const getOptNum = (keys) => {
+    const v = getVal(keys);
+    if (v === undefined || v === null || v === '') return undefined;
+    const num = Number(String(v).replace(/,/g, '').replace('%', '').trim());
+    return (!isNaN(num) && num > 0) ? num : undefined;
+  };
+
   const fullName = getVal([
     'Full Name', 'የአባሉ ሙሉ ስም', 'Full Name / የአባሉ ሙሉ ስም', 
     'FullName', 'Name', 'ስም', 'ሙሉ ስም', 'የአባሉ ስም', 'ሙሉ ስም'
@@ -458,12 +496,12 @@ function mapExcelRowToMember(rawRow) {
   const gender = (genderRaw === 'ወ' || genderRaw === 'M' || genderRaw === 'Male' || genderRaw.includes('ወንድ')) ? 'Male' : 
                  (genderRaw === 'ሴ' || genderRaw === 'F' || genderRaw === 'Female' || genderRaw.includes('ሴት')) ? 'Female' : 'Male';
 
-  const salary = Number(getVal([
+  const salary = getOptNum([
     'Gross Salary', 'ጠቅላላ የወር ደመወዝ', 'Gross Salary / ጠቅላላ የወር ደመወዝ',
     'Gross Monthly Salary (ETB)', 'Salary', 'GrossSalary',
     'ጠቅላላ የወር ደመወዝ መጠን', 'ጠቅላላ ደመወዝ', 'ደመወዝ', 'የወር ደመወዝ', 'ጠቅላላ ደመወዝ',
-    'ጥቅል የወር ደመወዝ መጠን', 'ጥቅል ደመወዝ'
-  ])) || 0;
+    'ጥቅል የወር ደመወዝ መጠን', 'ጥቅል ደመወዝ', 'ደሞዝ', 'የወር ደሞዝ', 'ጠቅላላ ደሞዝ'
+  ]) || 0;
   
   const branch = getVal([
     'Sector Unit', 'ወረዳ/ክላስተር/መስሪያ ቤት', 'Sector Unit / ወረዳ/ክላስተር/መስሪያ ቤት',
@@ -480,10 +518,10 @@ function mapExcelRowToMember(rawRow) {
     'Business Type', 'Business Name', 'Enterprise Type', 'BusinessTypes'
   ]);
 
-  const capital = Number(getVal([
+  const capital = getOptNum([
     'Capital', 'ካፒታል', 'Capital / ካፒታል',
     'Investment Capital'
-  ])) || 0;
+  ]) || 0;
 
   let membershipType = getVal(['Membership Type', 'MembershipType', 'Type']);
   if (!membershipType && categoryName) {
@@ -503,12 +541,7 @@ function mapExcelRowToMember(rawRow) {
     else membershipType = 'Non-Salary';
   }
 
-  const getOptNum = (keys) => {
-    const v = getVal(keys);
-    if (v === undefined || v === null || v === '') return undefined;
-    const num = Number(String(v).replace(/,/g, '').replace('%', '').trim());
-    return (!isNaN(num) && num > 0) ? num : undefined;
-  };
+
 
   return {
     fullName,
@@ -521,12 +554,12 @@ function mapExcelRowToMember(rawRow) {
     rawCategory: categoryName,
     wing: categoryName?.toLowerCase().includes('wing') ? { wingType: (categoryName || '').replace(' Wing', '') } : undefined,
     financial: {
-      salary:          membershipType === 'Salary-Based' || membershipType === 'Wing' ? salary : 0,
+      salary:          salary,
       employmentType:  getVal(['Employment Type', 'EmploymentType', 'የቅጥር ሁኔታ']) || 'Private',
       currency:        'ETB',
       businessType,
-      income:          membershipType === 'Business' ? (Number(getVal(['Income', 'ገቢ'])) || salary) : 0,
-      capital:         membershipType === 'Investor' ? (Number(getVal(['Capital', 'ካፒታል', 'Capital / ካፒታል'])) || salary) : 0,
+      income:          Number(getVal(['Income', 'ገቢ'])) || salary || 0,
+      capital:         Number(getVal(['Capital', 'ካፒታል', 'Capital / ካፒታል'])) || salary || 0,
       investmentType:  getVal(['Investment Type', 'የኢንቨስትመንት አይነት', 'Investor Type'])
     },
     // Manual overrides for financial results if provided in Excel
